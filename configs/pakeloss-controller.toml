@@ -1,0 +1,51 @@
+[server]
+# agentからの接続を待ち受けるgRPCアドレスです。
+grpc_addr = "127.0.0.1:8443"
+# CLI/TUI向けHTTP APIの待受アドレスです。
+http_addr = "127.0.0.1:8080"
+
+[result_log]
+# 各出力先は任意です。空にするとその形式の出力を無効化します。
+# flowごとの1秒集計を出力します。
+csv = "logs/results.csv"
+jsonl = "logs/results.jsonl"
+# セッション終了時のflow集計を追記します。
+summary_csv = "logs/session_summaries.csv"
+summary_jsonl = "logs/session_summaries.jsonl"
+# 通信断の開始・終了イベントを出力します。
+outage_event_csv = "logs/outage_events.csv"
+outage_event_jsonl = "logs/outage_events.jsonl"
+# ログをファイルへ書き出す周期です。
+flush_interval = "10s"
+# CSVのtimestampに使用するタイムゾーンです。JSONLは常にUTCです。
+timezone = "Asia/Tokyo"
+
+[auth]
+# agentおよびHTTP APIの認証に使用する共有tokenです。本番利用前に変更してください。
+token = "change-me-before-use"
+
+[tui]
+# loss graphの表示形式です。unicodeまたはasciiを指定します。
+graph_mode = "unicode"
+# TUIがHTTP APIから状態を再取得する周期です。
+refresh_interval = "1s"
+
+[measurement]
+# sender/receiver双方のreportが揃うまでcontrollerが確定を待つ時間です。
+report_finalize_delay = "2s"
+# 1つのreportにまとめるprobe数です。report windowはinterval_msとの積です。
+report_bucket_factor = 10
+# 連続欠損を通信断として集計する最小時間（ミリ秒）です。
+outage_threshold_ms = 100
+
+[flow_defaults]
+# probeの送信間隔（ミリ秒）です。
+interval_ms = 10
+# IPv4/UDP headerを含むpacket全体のサイズ（byte）です。
+packet_size = 96
+# 1つの論理flowでround-robinするUDP source port数です。
+source_port_count = 8
+# response未着を補助観測する時間（ミリ秒）です。loss確定にはrequest sequence reportを使用します。
+loss_confirm_window_ms = 2000
+# 自動生成するflowの初期状態です。stoppedまたはrunningを指定します。
+state = "stopped"
