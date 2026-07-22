@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package probe.control;
+
+option go_package = "pakeloss/internal/pb";
+
+service ControlService {
+  rpc Connect(stream AgentMessage) returns (stream ControllerMessage);
+}
+
+message AgentMessage {
+  oneof payload {
+    Register register = 1;
+    Heartbeat heartbeat = 2;
+    ConfigAck config_ack = 3;
+    ConfigError config_error = 4;
+    AgentLog agent_log = 6;
+    ResultReport result_report = 7;
+  }
+}
+
+message ControllerMessage {
+  oneof payload {
+    ConfigSnapshot config_snapshot = 1;
+  }
+}
+
+message Register {
+  string agent_id = 1;
+  string token = 2;
+  string udp_addr = 3; // advertised UDP listen address reachable by peer agents
+}
+
+message Heartbeat {
+  string agent_id = 1;
+  int64 ts_unix_nano = 2;
+  uint64 active_config_version = 3;
+  uint32 active_flows = 4;
+}
+
+message ConfigSnapshot {
+  string agent_id = 1;
+  uint64 config_version = 2;
+  string config_hash = 3;
+  repeated FlowConfig flows = 4;
+}
+
+message FlowConfig {
+  reserved 7;
+  string id = 1;
+  uint32 flow_key = 2;
+  string dst_id = 3;
+  string dst_addr = 4;
+  uint32 interval_ms = 5;
+  uint32 packet_size = 6;
+  string state = 8;
+  uint32 source_port_count = 9;
+  string src_id = 10;
+  uint32 loss_confirm_window_ms = 11;
+  uint32 report_window_ms = 12;
+}
+
+message ConfigAck {
+  string agent_id = 1;
+  uint64 config_version = 2;
+  string config_hash = 3;
+  string status = 4;
+}
+
+message ConfigError {
+  string agent_id = 1;
+  uint64 config_version = 2;
+  string error = 3;
+}
+
+message SeqRange {
+  uint64 start = 1;
+  uint64 end = 2;
+}
+
+message ResultReport {
+  string ts = 1;
+  string agent_id = 2;
+  uint32 flow_key = 3;
+  string src = 4;
+  string dst = 5;
+  string flow_id = 6;
+  uint32 session_id = 7;
+  uint32 interval_ms = 8;
+  uint32 window_ms = 9;
+  string role = 10;
+  reserved 11, 12;
+  uint64 duplicate = 13;
+  uint64 reorder = 14;
+  reserved 15;
+  repeated SeqRange seq_ranges = 16;
+}
+
+message AgentLog {
+  string agent_id = 1;
+  string level = 2;
+  string message = 3;
+  string ts = 4;
+}

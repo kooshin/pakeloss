@@ -1,0 +1,21 @@
+[agent]
+# controller上でagentを識別する一意なIDです。
+id = "node-c"
+
+[controller]
+# 接続先controllerのgRPCアドレスです。
+addr = "127.0.0.1:8443"
+# controller接続に使用するLinux VRFです。空の場合は既定のルーティングテーブルを使用します。
+vrf = ""
+# controllerの[auth].tokenと同じ共有tokenを指定します。
+token = "change-me-before-use"
+
+[udp]
+# probeの送受信を待ち受けるUDPアドレスです。
+listen_addr = "127.0.0.1:40003"
+# probe通信に使用するLinux VRFです。空の場合は既定のルーティングテーブルを使用します。
+listen_vrf = ""
+# peerへ通知する到達可能なUDPアドレスです。空の場合はlisten_addrから決定します。
+advertise_addr = ""
+# controller切断時の動作です。continueは既存flowを維持し、stopは全flowを停止します。
+on_controller_disconnect = "continue"

@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Verify modules
+        run: go mod verify
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build Linux amd64 bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME#v}"
+          package_name="pakeloss_${version}_linux_amd64"
+          package_dir="dist/${package_name}"
+
+          mkdir -p "${package_dir}/configs"
+
+          for binary in pakeloss-agent pakeloss-controller pakelossctl; do
+            CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+              -trimpath \
+              -ldflags="-s -w" \
+              -o "${package_dir}/${binary}" \
+              "./cmd/${binary}"
+          done
+
+          cp README.md LICENSE "${package_dir}/"
+          cp configs/*.toml "${package_dir}/configs/"
+
+          tar -C dist -czf "dist/${package_name}.tar.gz" "${package_name}"
+          (
+            cd dist
+            sha256sum "${package_name}.tar.gz" > checksums.txt
+          )
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/pakeloss_*.tar.gz \
+            dist/checksums.txt \
+            --verify-tag \
+            --generate-notes
