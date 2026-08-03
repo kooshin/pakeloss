@@ -1,0 +1,53 @@
+name: Load Test
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 18 * * 0"
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: Load test duration in seconds
+        required: true
+        default: "60"
+        type: choice
+        options:
+          - "15"
+          - "60"
+          - "300"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: load-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Run load test
+        env:
+          LOAD_TEST_DURATION_SECONDS: ${{ github.event_name == 'pull_request' && '15' || inputs.duration_seconds || '60' }}
+          LOAD_TEST_LOG_DIR: ${{ github.workspace }}/load-test-logs
+        run: ./scripts/local-load-test.sh
+
+      - name: Upload load test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-logs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: load-test-logs/
+          if-no-files-found: warn
+          retention-days: 14

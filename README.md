@@ -35,6 +35,22 @@ go build ./cmd/pakeloss-agent
 go build ./cmd/pakelossctl
 ```
 
+### ローカル負荷試験
+
+Linux環境でcontrollerと3台のagentを起動し、loopback上の6方向flowを1ms間隔で測定します。実行には`bash`、`curl`、`jq`が必要です。
+
+```bash
+./scripts/local-load-test.sh
+```
+
+既定の実行時間は15秒です。環境変数で変更できます。
+
+```bash
+LOAD_TEST_DURATION_SECONDS=60 ./scripts/local-load-test.sh
+```
+
+各flowの送受信packet数が実行秒数あたり500以上で、全agentとflowが稼働していれば成功です。GitHub Actionsではpull requestごとに15秒、毎週月曜のJST 03:00頃と手動実行時に60秒の負荷試験を行います。失敗時を含むプロセスログはworkflow artifactへ保存されます。
+
 `v*`形式のtagをpushするとGitHub Actionsのrelease workflowが起動します。3バイナリ、README、LICENSE、サンプル設定を含むLinux amd64用archiveとchecksumを生成し、GitHub Releaseへ公開します。
 
 ## ローカルデモ
